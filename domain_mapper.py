@@ -182,25 +182,35 @@ def load_transcripts(domain_file):
     return transcripts
 
 
+def parse_gff(path):
+    """
+    Loads a gff3 file into a gffpd object,
+    filters it to only store CDS entries and parses the attribute column into separate columns.
+    Returns a pandas dataframe
+    """
+
+    gff = gffpd.read_gff3(path)
+    cds_df = (
+        gff.filter_feature_of_type(["CDS"])
+        .attributes_to_columns()
+        .astype({"seq_id": "str"})
+    )
+    assert cds_df.shape[0], "No CDS data could be extracted from the gff file"
+    cds_df.drop(["attributes"], axis=1, inplace=True)
+    return cds_df
+
+
 def parse_gffs(gff_list):
     """
-    Reads the gff file list and loads each one into a gffpd object,
-    filters it to only store CDS entries and parses the attribute column into separate columns.
-    The results is a pandas dataframe which gets stored in a dictionary, with the build names as key.
+    Reads a *list* of gff files and build names
+    Returns parsed and filtered dictionary of pandas dataframes, with the build names as key.
     """
     gff_cds_builds = {}
     with open(gff_list, "r", encoding="utf-8") as gl:
         for line in gl:
             path, build = line.rstrip().split("\t")
-            gff = gffpd.read_gff3(path)
-            cds_df = (
-                gff.filter_feature_of_type(["CDS"])
-                .attributes_to_columns()
-                .astype({"seq_id": "str"})
-            )
-            assert cds_df.shape[0], "No CDS data could be extracted from the gff file"
-            cds_df.drop(["attributes"], axis=1, inplace=True)
-            gff_cds_builds[build] = cds_df
+            df = parse_gff(path)
+            gff_cds_builds[build] = df
     return gff_cds_builds
 
 

@@ -3,7 +3,7 @@ install:
 		pip install -r requirements.txt
 
 test:
-	python -m pytest -vv -rP --cov=hello test_units.py
+	python -m pytest -vv -rP test_units.py
 
 lint:
 	pylint --disable=R,C domain_mapper.py
