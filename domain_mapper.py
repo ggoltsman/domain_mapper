@@ -128,7 +128,7 @@ class Transcript:
         tr_idx = []
         for s, e in self.cds_coords:
             tr_idx.extend(list(range(s, e + 1)))
-        assert (len(tr_idx) / 3).is_integer(), "Must be divisible by three to be a valid transcript"
+        assert (len(tr_idx) / 3).is_integer(), "Sum of CDS lengths must be divisible by three to be a valid transcript"
 
         if self.strand == "-":
             # if the transcript is on the reverse strand, we simply reverse the order of the cds positions so that tr_idx[0] is the last genomic position of the trancript
@@ -141,9 +141,15 @@ class Transcript:
             )  # we want the offest to the 1st nucleotide of the 1st codon of the domain
             domain_end_offset = domain.aa_end * 3
 
-            # update domain object with genomic start,end
-            domain.genomic_start = tr_idx[domain_start_offset - 1]
-            domain.genomic_end = tr_idx[domain_end_offset - 1]
+            # get genomic start,end. Regardless of the transcript strand, we report the positions in the nominal left-to-right orider
+            gen_coords = [tr_idx[domain_start_offset - 1], tr_idx[domain_end_offset - 1]]
+            #domain.genomic_start = tr_idx[domain_start_offset - 1]
+            #domain.genomic_end = tr_idx[domain_end_offset - 1]
+            domain.genomic_start, domain.genomic_end = sorted(gen_coords)
+
+
+
+
             domain.genomic_len = abs(domain.genomic_end - domain.genomic_start + 1)
 
     def print_mapped_domain_info(self, out_fh):
@@ -162,6 +168,7 @@ class Transcript:
                 str(dm.genomic_start) + "-" + str(dm.genomic_end),
                 str(dm.genomic_len),
             ]
+            
             # print('\t'.join(fields))
             out_fh.write("\t".join(fields) + "\n")
 
