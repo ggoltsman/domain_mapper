@@ -96,7 +96,6 @@ class Transcript:
     def parse_cds(self, CDSBuilds):
         """
         Queries the cds dataframe for entries matching the transcript id.
-        Assumes that the 'Parent' attribute in the gff file has the format 'transcript:[transcript id]'
         """
 
         if self.build not in CDSBuilds.keys():
@@ -106,12 +105,17 @@ class Transcript:
             )
 
         cds_df = CDSBuilds[self.build]
+        if not cds_df.Parent.str.startswith('transcript:').all():
+            raise ValueError(
+                "At least one CDS feature has an invalid `Parent` attribute.  Please make sure all have the format 'transcript:[transcript id]' "
+            )
 
         query_by_transcript = f'Parent == "transcript:{self.tr_ID}"'
         my_transcript_df = cds_df.query(query_by_transcript).reset_index()
         if not my_transcript_df.shape[0]:
             raise ValueError(
-                "No match found in the gff file for transcript ", self.tr_ID
+                "No match found in the gff file for transcript ", self.tr_ID, 
+                "; Note: CDS 'Parent' attributes must have the format 'transcript:[transcript id]' "
             )
 
         self.chrom = my_transcript_df.seq_id[0]
@@ -142,15 +146,10 @@ class Transcript:
             domain_end_offset = domain.aa_end * 3
 
             # get genomic start,end. Regardless of the transcript strand, we report the positions in the nominal left-to-right orider
-            gen_coords = [tr_idx[domain_start_offset - 1], tr_idx[domain_end_offset - 1]]
-            #domain.genomic_start = tr_idx[domain_start_offset - 1]
-            #domain.genomic_end = tr_idx[domain_end_offset - 1]
+            gen_coords = [tr_idx[domain_start_offset - 1], 
+                          tr_idx[domain_end_offset - 1]]
             domain.genomic_start, domain.genomic_end = sorted(gen_coords)
-
-
-
-
-            domain.genomic_len = abs(domain.genomic_end - domain.genomic_start + 1)
+            domain.genomic_len = domain.genomic_end - domain.genomic_start + 1
 
     def print_mapped_domain_info(self, out_fh):
         """
@@ -235,7 +234,7 @@ def main():
         "--gff_list",
         type=str,
         required=True,
-        help="A list of paths to feature files (in gff3 format) for every Human build pres containing the genomic features for a specific Human genome build.",
+        help="A list of paths to feature files (in gff3 format), with corresponding Human genome build names specified",
     )
     parser.add_argument(
         "-o", "--output_file", type=str, required=True, help="Output file name"

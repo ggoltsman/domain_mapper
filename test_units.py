@@ -12,6 +12,7 @@ def setup_function(function):
 def teardown_function(function):
     print("Running Teardown: %s" % {function.__name__})
     del function.gff_in
+    del function.bad_gff_in
 
 
 #-------------------------------------------------
@@ -19,6 +20,9 @@ def teardown_function(function):
 def test_gff_parse():
     df = parse_gff(test_gff_parse.gff_in)
     assert df.shape[0] == 20
+
+def test_parse_cds():
+    bad_gff_in = 'test/bad-gff-2.gff3'
     
 
     
