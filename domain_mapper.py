@@ -23,13 +23,8 @@ Example:
 "Zincfinger,RING-type:24-658;BRCA1,serine-richdomain:345-507;”
 
 
-2. A two-column *list* of feature files corresponding to the genome builds referenced in the domain file. 
-Each feature file must be in gff3 format and contain the genomic features for a specific Human genome build. 
-The first column is the path to the gff3 file, the second column is the build name as it appears in the domain table. 
-Example:
-
-/path/to/Homo_sapiens.GRCh37.87.chr.gff3.gz GRCh37
-/path/to/Homo_sapiens.GRCh38.111.chr.gff3.gz GRCh38
+2. A feature file in gff3 format, corresponding to a specific Human build referenced by the domains fil (e.g. GRCh37),
+and containing features matching the transcripts in the domains file.
 
 
 The output is a tab-delimited file with the following columns:
@@ -93,18 +88,11 @@ class Transcript:
             domains[dName] = Domain(dName, aa_coords[0], aa_coords[1], aa_len)
         return domains
 
-    def parse_cds(self, CDSBuilds):
+    def parse_cds(self, cds_df):
         """
         Queries the cds dataframe for entries matching the transcript id.
         """
 
-        if self.build not in CDSBuilds.keys():
-            raise ValueError(
-                "Build name in the input file not matiching any of the gffs loaded",
-                self.build,
-            )
-
-        cds_df = CDSBuilds[self.build]
         if not cds_df.Parent.str.startswith('transcript:').all():
             raise ValueError(
                 "At least one CDS feature has an invalid `Parent` attribute.  Please make sure all have the format 'transcript:[transcript id]' "
@@ -114,8 +102,7 @@ class Transcript:
         my_transcript_df = cds_df.query(query_by_transcript).reset_index()
         if not my_transcript_df.shape[0]:
             raise ValueError(
-                "No match found in the gff file for transcript ", self.tr_ID, 
-                "; Note: CDS 'Parent' attributes must have the format 'transcript:[transcript id]' "
+                "No match found in the gff file for transcript ", self.tr_ID
             )
 
         self.chrom = my_transcript_df.seq_id[0]
@@ -206,18 +193,18 @@ def parse_gff(path):
     return cds_df
 
 
-def parse_gffs(gff_list):
-    """
-    Reads a *list* of gff files and build names
-    Returns parsed and filtered dictionary of pandas dataframes, with the build names as key.
-    """
-    gff_cds_builds = {}
-    with open(gff_list, "r", encoding="utf-8") as gl:
-        for line in gl:
-            path, build = line.rstrip().split("\t")
-            df = parse_gff(path)
-            gff_cds_builds[build] = df
-    return gff_cds_builds
+# def parse_gffs(gff_list):
+#     """
+#     Reads a *list* of gff files and build names
+#     Returns parsed and filtered dictionary of pandas dataframes, with the build names as key.
+#     """
+#     gff_cds_builds = {}
+#     with open(gff_list, "r", encoding="utf-8") as gl:
+#         for line in gl:
+#             path, build = line.rstrip().split("\t")
+#             df = parse_gff(path)
+#             gff_cds_builds[build] = df
+#     return gff_cds_builds
 
 
 def main():
@@ -231,10 +218,10 @@ def main():
     )
     parser.add_argument(
         "-g",
-        "--gff_list",
+        "--gff_file",
         type=str,
         required=True,
-        help="A list of paths to feature files (in gff3 format), with corresponding Human genome build names specified",
+        help="A paths to a gff feature file in gff3 format for a specific Human build."
     )
     parser.add_argument(
         "-o", "--output_file", type=str, required=True, help="Output file name"
@@ -258,11 +245,11 @@ def main():
     ]
     out.write("\t".join(header) + "\n")
 
-    transcripts = load_transcripts(args.domain_file)
-    gffCDSBuilds = parse_gffs(args.gff_list)
+    transcripts = load_transcripts(args.domain_file)  # a list of Transcript objects initialized from the input domains table
+    cds_df = parse_gff(args.gff_file)  # a single filtered dataframe containing all the CDS features, with their attributes broken up into columns
 
     for t in transcripts:
-        t.parse_cds(gffCDSBuilds)
+        t.parse_cds(cds_df)
         t.map_domains_to_genome()
         t.print_mapped_domain_info(out)
 

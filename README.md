@@ -19,13 +19,9 @@ Example:
 
 
 
-2. A two-column *list* of feature files corresponding to the genome builds referenced in the domain file. 
-Each feature file must be in gff3 format and contain the genomic features for a specific Human genome build. 
-The first column is the path to the gff3 file, the second column is the build name as it appears in the domain table. 
-Example:
+2. A feature file in gff3 format, corresponding to a specific Human build referenced by the domains fil (e.g. GRCh37),
+and containing features matching the transcripts in the domains file.  
 
-/path/to/Homo_sapiens.GRCh37.87.chr.gff3.gz GRCh37
-/path/to/Homo_sapiens.GRCh38.111.chr.gff3.gz GRCh38
 
 
 
