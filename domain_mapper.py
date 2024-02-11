@@ -159,7 +159,7 @@ class Transcript:
             out_fh.write("\t".join(fields) + "\n")
 
 
-def load_transcripts(domain_file):
+def load_transcripts(domain_file, gff_buildID):
     transcripts = []
     with open(domain_file, "r", encoding="utf-8") as domf:
         for line in domf:
@@ -170,8 +170,12 @@ def load_transcripts(domain_file):
                 raise ValueError("Malformatted input entry:", line)
 
             gene, trID, build, domains_str = ll
-            transcripts.append(Transcript(gene, trID, build, domains_str))
+            if build == gff_buildID:
+                transcripts.append(Transcript(gene, trID, build, domains_str))
 
+        if not len(transcripts):
+            raise ValueError("No entries matching the provided build name found in the input domains file!")
+        
     return transcripts
 
 
@@ -224,6 +228,14 @@ def main():
         help="A paths to a gff feature file in gff3 format for a specific Human build."
     )
     parser.add_argument(
+        "-b",
+        "--build",
+        type=str,
+        required=True,
+        help="Human build name; must match a build referenced in the domains input file."
+    )
+    
+    parser.add_argument(
         "-o", "--output_file", type=str, required=True, help="Output file name"
     )
 
@@ -245,7 +257,7 @@ def main():
     ]
     out.write("\t".join(header) + "\n")
 
-    transcripts = load_transcripts(args.domain_file)  # a list of Transcript objects initialized from the input domains table
+    transcripts = load_transcripts(args.domain_file, args.build)  # a list of Transcript objects initialized from the input domains table
     cds_df = parse_gff(args.gff_file)  # a single filtered dataframe containing all the CDS features, with their attributes broken up into columns
 
     for t in transcripts:
