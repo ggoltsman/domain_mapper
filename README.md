@@ -52,11 +52,17 @@ RUN:
 
  domain_mapper.py -d DOMAIN_FILE -g GFF_FILE -b BUILD_NAME -o OUTPUT_FILE
 
- A validation run can be performed on a small single-domain input and a small gff file, both provided in this package:
+ A quick validation run can be performed on a small single-domain input and a small gff file, both provided in this package:
 
  cd test/
  python3 ../domain_mapper.py -d mini-domains.tsv -g mini-hs38.gff3 -b GRCh38 -o test.out
- 
+
+
+To run on a full Human genome features gff file, you can download builds GRCh37 and GRCh38 from these sites:
+https://ftp.ensembl.org/pub/grch37/current/gff3/homo_sapiens/
+https://ftp.ensembl.org/pub/release-111/gff3/homo_sapiens/
+
+
 
 ASSUMPTIONS:
 
