@@ -39,8 +39,11 @@ Output:  tab-delimited file with the following columns
 
 INSTALLATION:
 
- Activate a Python3 environment and run 'make install' to install the dependencies listed in the requirements.txt file
- Alternatively, you can install them directly with pip:
+ Activate a Python3 environment (python 3.10 or higher) and install all the dependencies with
+
+ make install
+ 
+Or, directly with pip:
 
  pip install -r requirements.txt
 
