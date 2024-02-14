@@ -101,9 +101,10 @@ class Transcript:
         query_by_transcript = f'Parent == "transcript:{self.tr_ID}"'
         my_transcript_df = cds_df.query(query_by_transcript).reset_index()
         if not my_transcript_df.shape[0]:
-            raise ValueError(
-                "No match found in the gff file for transcript ", self.tr_ID
+            print(
+                "WARNING: No match found in the gff file for transcript ", self.tr_ID, file=sys.stderr
             )
+            return False
 
         self.chrom = my_transcript_df.seq_id[0]
         self.strand = my_transcript_df.strand[0]
@@ -173,8 +174,10 @@ def load_transcripts(domain_file, gff_buildID):
             if build == gff_buildID:
                 transcripts.append(Transcript(gene, trID, build, domains_str))
 
-        if not len(transcripts):
-            raise ValueError("No entries matching the provided build name found in the input domains file!")
+        try:
+            len(transcripts)
+        except ValueError:
+            print ("No entries matching the provided build name found in the input domains file!")
         
     return transcripts
 
@@ -261,7 +264,9 @@ def main():
     cds_df = parse_gff(args.gff_file)  # a single filtered dataframe containing all the CDS features, with their attributes broken up into columns
 
     for t in transcripts:
-        t.parse_cds(cds_df)
+        if t.parse_cds(cds_df) == False:
+            # we allow for cases when a transcrpt id is not found in the gff structure
+            continue
         t.map_domains_to_genome()
         t.print_mapped_domain_info(out)
 
