@@ -1,4 +1,4 @@
-Fabric Genomics - Bioinformatics Scientist Exercise B.1
+
 
 OVERVIEW:
 
